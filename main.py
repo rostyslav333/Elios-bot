@@ -7,5 +7,5 @@ def run_bot():
         # Тут буде логіка бота (підключення до API, аналіз, trade)
         time.sleep(60)
 
-if _ _name_ _ == "_ _main_ _":
+if name == "__main__":
     run_bot()
