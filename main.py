@@ -2,9 +2,23 @@
 import time
 import pandas as pd
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
+from binance.client import Client
+import os
 
-trades_log = []
+# Отримати API ключі з середовища
+API_KEY = os.getenv("API_KEY")
+API_SECRET = os.getenv("API_SECRET")
+
+client = Client(API_KEY, API_SECRET)
+
+def get_binance_price(symbol="BTCUSDT"):
+    try:
+        price = client.get_symbol_ticker(symbol=symbol)
+        return float(price['price'])
+    except Exception as e:
+        print("Binance API Error:", e)
+        return None
 
 def load_memory():
     try:
@@ -19,11 +33,10 @@ def load_memory():
 def simulate_confidence():
     return round(random.uniform(0.4, 0.9), 4)
 
-def simulate_price():
-    return round(random.uniform(10000, 30000), 2)
-
 def evaluate_trade(entry_price, direction):
-    current_price = simulate_price()
+    current_price = get_binance_price()
+    if current_price is None:
+        return 0
     if direction == "up":
         return 1 if current_price > entry_price else 0
     elif direction == "down":
@@ -51,14 +64,16 @@ def run_bot():
         while True:
             print("ШТ-бот Elios працює...")
             confidence = simulate_confidence()
-            trend = random.choice(["up", "down", "flat"])
+            trend = random.choice(["up", "down"])
 
             if confidence >= 0.58:
                 print(f"[OK] Ставка дозволена. Достовірність: {confidence}")
-                entry_price = simulate_price()
-                time.sleep(300)  # 5 хвилин
-                correct = evaluate_trade(entry_price, trend)
-                write_trade(confidence, trend, correct)
+                entry_price = get_binance_price()
+                if entry_price:
+                    print(f"[BINANCE] Поточна ціна: {entry_price}, тренд: {trend}")
+                    time.sleep(300)  # 5 хвилин
+                    correct = evaluate_trade(entry_price, trend)
+                    write_trade(confidence, trend, correct)
             else:
                 print(f"[SKIP] Пропуск ставки. Достовірність: {confidence}")
 
